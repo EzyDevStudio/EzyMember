@@ -1,0 +1,53 @@
+name: ezymember
+description: "A new Flutter project."
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.5.3
+
+dependencies:
+  flutter:
+    sdk: flutter
+  splashify: ^0.0.3
+  flare_splash_screen: ^4.0.0
+  cupertino_icons: ^1.0.8
+  quickalert: ^1.1.0
+  dio: ^5.0.10
+  random_avatar: ^0.0.8
+  get: ^4.6.6
+  image_picker: ^1.0.4
+  intl: ^0.19.0
+  qr_flutter: ^4.1.0
+  glowy_borders: ^1.0.2
+  barcode_widget: ^2.0.4
+  flip_card: ^0.7.0
+  card_swiper: ^3.0.1
+  coupon_uikit: ^0.2.1
+
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/imin_logo.jpg
+    - assets/welcome.png
+    - assets/Sign_up.png
+    - assets/imin_display_logo.png
+    - assets/Login.png
+    - assets/warning.png
+    - assets/error.png
+    - assets/success.png
+    - assets/Profile.png
+    - assets/qr.png
+    - assets/credit.png
+    - assets/edit_info.png
+    - assets/Refer.png
+    - assets/Settings.png
+    - assets/Voucher.png
+    - assets/Working_profile.png
