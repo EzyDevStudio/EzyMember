@@ -1,32 +1,114 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 
+// Custom AppBar Import
+import 'package:ezymember/CustomAppBar.dart';
+import 'package:ezymember/ProductDetailsPage.dart';
+
+
+
+// Models
+class Product {
+  final String id;
+  final String name;
+  final String price;
+  final String discountPrice;
+  final String imageUrl;
+  final String description;
+
+  Product({
+    required this.id,
+    required this.name,
+    required this.price,
+    required this.discountPrice,
+    required this.imageUrl,
+    this.description = '',
+  });
+}
+
+// Responsive breakpoints
+class ResponsiveBreakpoints {
+  static const double phone = 600;
+  static const double tablet = 900;
+  static const double desktop = 1200;
+}
+
+enum DeviceType {
+  phone,
+  tablet,
+}
+
 class Company_profile extends StatefulWidget {
   final Map<String, dynamic> companyData;
 
-  Company_profile({required this.companyData});
+  const Company_profile({super.key, required this.companyData});
 
   @override
   _Company_profileState createState() => _Company_profileState();
 }
 
 class _Company_profileState extends State<Company_profile> {
-  double _headerHeight = 200.0;
   bool _isExpanded = false;
-  Duration _timeUntilEnd = Duration(hours: 48);
+  late Duration _timeUntilEnd;
   Timer? _timer;
+  final Color themeColor = const Color(0xFF0656A0);
 
-  // Define adjustable sizes
-  late double profileImageSize;
-  late double fontSizeLarge;
-  late double fontSizeSmall;
-  late double fontSizeDescription;
-  late double fontSizeDescriptionText;
-  late double iconSize;
+  // Sample products data
+  final List<Product> products = [
+    Product(
+      id: '1',
+      name: 'Premium Coffee Maker',
+      price: '\$299.99',
+      discountPrice: '\$249.99',
+      imageUrl: 'coffee_maker.jpg',
+      description: 'High-end coffee maker with advanced brewing features',
+    ),
+    Product(
+      id: '2',
+      name: 'Smart Watch Pro',
+      price: '\$199.99',
+      discountPrice: '\$159.99',
+      imageUrl: 'smart_watch.jpg',
+      description: 'Advanced smartwatch with health monitoring',
+    ),
+    Product(
+      id: '3',
+      name: 'Wireless Earbuds',
+      price: '\$149.99',
+      discountPrice: '\$119.99',
+      imageUrl: 'earbuds.jpg',
+      description: 'Premium wireless earbuds with noise cancellation',
+    ),
+    Product(
+      id: '4',
+      name: 'Laptop Stand',
+      price: '\$79.99',
+      discountPrice: '\$59.99',
+      imageUrl: 'laptop_stand.jpg',
+      description: 'Ergonomic laptop stand with adjustable height',
+    ),
+    Product(
+      id: '5',
+      name: 'Mechanical Keyboard',
+      price: '\$129.99',
+      discountPrice: '\$99.99',
+      imageUrl: 'keyboard.jpg',
+      description: 'Professional mechanical keyboard with RGB lighting',
+    ),
+    Product(
+      id: '6',
+      name: 'Gaming Mouse',
+      price: '\$89.99',
+      discountPrice: '\$69.99',
+      imageUrl: 'mouse.jpg',
+      description: 'High-precision gaming mouse with customizable buttons',
+    ),
+  ];
 
   @override
   void initState() {
     super.initState();
+    _timeUntilEnd = Duration(hours: 48);
     _startTimer();
   }
 
@@ -48,155 +130,200 @@ class _Company_profileState extends State<Company_profile> {
     });
   }
 
+  DeviceType _getDeviceType(BuildContext context) {
+    double width = MediaQuery.of(context).size.width;
+    if (width >= ResponsiveBreakpoints.tablet) {
+      return DeviceType.tablet;
+    }
+    return DeviceType.phone;
+  }
+
+  EdgeInsets _getResponsivePadding(BuildContext context) {
+    double width = MediaQuery.of(context).size.width;
+    if (width >= ResponsiveBreakpoints.tablet) {
+      return EdgeInsets.symmetric(horizontal: width * 0.1);
+    }
+    return EdgeInsets.symmetric(horizontal: 16);
+  }
+
+  double _getResponsiveSpacing(BuildContext context) {
+    return _getDeviceType(context) == DeviceType.tablet ? 24.0 : 16.0;
+  }
+
   @override
   Widget build(BuildContext context) {
-    _setResponsiveSizes();
+    _getDeviceType(context);
+    final responsivePadding = _getResponsivePadding(context);
+    final spacing = _getResponsiveSpacing(context);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.companyData['companyName'] ?? 'Company Profile'),
-        backgroundColor: const Color(0xFF0656A0),
+      backgroundColor: Colors.grey[100],
+      appBar: CustomAppBar(
+        backgroundColor: themeColor,
+        showBackButton: true,
+        useLogo: true,
+        logoAssetPath: 'assets/imin_display_logo.png',
+        elevation: 0,
       ),
       body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _buildHeader(),
-            _buildProfileInfo(),
-            _buildCompanyDescription(),
-            _buildCompanyInfo(),
-            _buildMembershipBenefits(),
-            _buildPromotions(),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _setResponsiveSizes() {
-    double screenWidth = MediaQuery.of(context).size.width;
-
-    if (screenWidth < 600) {
-      profileImageSize = 40.0;
-      fontSizeLarge = 18.0;
-      fontSizeSmall = 12.0;
-      fontSizeDescription = 13.0;
-      fontSizeDescriptionText = 11.0;
-      iconSize = 20.0;
-    } else {
-      profileImageSize = 70.0;
-      fontSizeLarge = 30.0;
-      fontSizeSmall = 14.0;
-      fontSizeDescription = 17.0;
-      fontSizeDescriptionText = 14.0;
-      iconSize = 24.0;
-    }
-  }
-
-  void _toggleHeaderHeight() {
-    setState(() {
-      _headerHeight = _headerHeight == 200.0 ? 300.0 : 200.0;
-    });
-  }
-
-  Widget _buildHeader() {
-    return GestureDetector(
-      onTap: _toggleHeaderHeight,
-      child: Container(
-        height: _headerHeight,
-        color: const Color(0xFF0656A0),
-        child: Container(
-          alignment: Alignment.bottomLeft,
-          padding: const EdgeInsets.all(16.0),
-          child: Text(
-            widget.companyData['companyName']?.toUpperCase() ?? 'COMPANY NAME',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: fontSizeLarge,
-              fontWeight: FontWeight.bold,
-            ),
+        child: Padding(
+          padding: responsivePadding,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              SizedBox(height: spacing),
+              _buildResponsiveLayout(context),
+              SizedBox(height: spacing),
+            ],
           ),
         ),
       ),
     );
   }
 
-  Widget _buildProfileInfo() {
+  Widget _buildResponsiveLayout(BuildContext context) {
+    final deviceType = _getDeviceType(context);
+    final isTablet = deviceType == DeviceType.tablet;
+
+    if (isTablet) {
+      return Column(
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                flex: 1,
+                child: _buildCompanyOverview(),
+              ),
+              SizedBox(width: 16),
+              Expanded(
+                flex: 1,
+                child: _buildDescription(),
+              ),
+            ],
+          ),
+          SizedBox(height: 16),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                flex: 1,
+                child: Column(
+                  children: [
+                    _buildStats(),
+                    SizedBox(height: 16),
+                    _buildBenefits(),
+                  ],
+                ),
+              ),
+              SizedBox(width: 16),
+              Expanded(
+                flex: 1,
+                child: Container(), // Empty container for layout balance
+              ),
+            ],
+          ),
+          SizedBox(height: 16),
+          _buildSpecialOfferSection(),
+          SizedBox(height: 16),
+          _buildResponsivePosterContainers(context),
+        ],
+      );
+    } else {
+      return Column(
+        children: [
+          _buildCompanyOverview(),
+          SizedBox(height: 16),
+          _buildDescription(),
+          SizedBox(height: 16),
+          _buildStats(),
+          SizedBox(height: 16),
+          _buildBenefits(),
+          SizedBox(height: 16),
+          _buildSpecialOfferSection(),
+          SizedBox(height: 16),
+          _buildResponsivePosterContainers(context),
+        ],
+      );
+    }
+  }
+
+  Widget _buildCompanyOverview() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
+      padding: EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            spreadRadius: 2,
-            blurRadius: 5,
-            offset: Offset(0, 3),
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
           ),
         ],
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          CircleAvatar(
-            radius: profileImageSize / 2,
-            backgroundColor: const Color(0xFF0656A0),
-            child: Icon(Icons.business, color: Colors.white),
-          ),
-          SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  widget.companyData['companyName']?.toUpperCase() ?? 'COMPANY NAME',
-                  style: TextStyle(
-                    fontSize: fontSizeLarge,
-                    fontWeight: FontWeight.bold,
-                    color: const Color(0xFF0656A0),
-                  ),
-                ),
-                SizedBox(height: 8),
-                Row(
+          Row(
+            children: [
+              Icon(Icons.business, color: themeColor, size: 32),
+              SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.star, color: Colors.orange, size: iconSize),
-                    SizedBox(width: 4),
                     Text(
-                      '${widget.companyData['rating'] ?? 'N/A'} • ${widget.companyData['category'] ?? 'UNCATEGORIZED'}',
+                      widget.companyData['companyName']?.toUpperCase() ?? 'COMPANY NAME',
                       style: TextStyle(
-                        fontSize: fontSizeSmall,
+                        fontSize: 20,
                         fontWeight: FontWeight.bold,
-                        color: const Color(0xFF0656A0),
+                        color: themeColor,
                       ),
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      widget.companyData['category'] ?? 'UNCATEGORIZED',
+                      style: TextStyle(color: Colors.grey[600]),
                     ),
                   ],
                 ),
-              ],
-            ),
+              ),
+            ],
+          ),
+          SizedBox(height: 16),
+          Row(
+            children: [
+              Icon(Icons.star, color: Colors.orange, size: 20),
+              SizedBox(width: 4),
+              Text(
+                '${widget.companyData['rating'] ?? 'N/A'}',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
           ),
         ],
       ),
     );
   }
 
-  Widget _buildCompanyDescription() {
+  Widget _buildDescription() {
     String description = widget.companyData['description']?.toUpperCase() ?? 'Description not provided.';
     String displayedDescription = _isExpanded || description.length <= 100
         ? description
         : '${description.substring(0, 100)}...';
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
+      padding: EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            spreadRadius: 2,
-            blurRadius: 5,
-            offset: Offset(0, 3),
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
           ),
         ],
       ),
@@ -204,37 +331,32 @@ class _Company_profileState extends State<Company_profile> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'COMPANY DESCRIPTION',
+            'ABOUT',
             style: TextStyle(
-              fontSize: fontSizeDescription,
+              fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: const Color(0xFF0656A0),
+              color: themeColor,
             ),
           ),
-          SizedBox(height: 8),
+          SizedBox(height: 12),
           Text(
             displayedDescription,
-            textAlign: TextAlign.left,
             style: TextStyle(
-              fontSize: fontSizeDescriptionText,
+              fontSize: 15,
+              height: 1.5,
+              color: Colors.grey[800],
             ),
           ),
           if (description.length > 100)
-            GestureDetector(
-              onTap: () {
-                setState(() {
-                  _isExpanded = !_isExpanded;
-                });
-              },
-              child: Padding(
-                padding: EdgeInsets.only(top: 8.0),
-                child: Text(
-                  _isExpanded ? 'SHOW LESS' : 'READ MORE',
-                  style: TextStyle(
-                    color: const Color(0xFF0656A0),
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+            TextButton(
+              onPressed: () => setState(() => _isExpanded = !_isExpanded),
+              style: TextButton.styleFrom(
+                padding: EdgeInsets.zero,
+                foregroundColor: themeColor,
+              ),
+              child: Text(
+                _isExpanded ? 'SHOW LESS' : 'READ MORE',
+                style: TextStyle(fontWeight: FontWeight.bold),
               ),
             ),
         ],
@@ -242,64 +364,78 @@ class _Company_profileState extends State<Company_profile> {
     );
   }
 
-  Widget _buildCompanyInfo() {
+  Widget _buildStats() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 30.0, vertical: 16.0),
-      margin: EdgeInsets.all(5.0),
+      padding: EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            spreadRadius: 2,
-            blurRadius: 5,
-            offset: Offset(0, 3),
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
           ),
         ],
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _buildInfoItem(Icons.group, '${widget.companyData['users'] ?? 0} Users'),
-          _buildInfoItem(Icons.location_on, widget.companyData['location'] ?? 'Unknown'),
-          _buildInfoItem(Icons.access_time, 'Since ${widget.companyData['foundedYear'] ?? 'N/A'}'),
+          _buildStatItem(
+            Icons.people_outline,
+            '${widget.companyData['users'] ?? 0}',
+            'USERS',
+          ),
+          _buildStatItem(
+            Icons.location_on_outlined,
+            widget.companyData['location'] ?? 'Unknown',
+            'LOCATION',
+          ),
+          _buildStatItem(
+            Icons.calendar_today_outlined,
+            widget.companyData['foundedYear'] ?? 'N/A',
+            'FOUNDED',
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildInfoItem(IconData icon, String text) {
+  Widget _buildStatItem(IconData icon, String value, String label) {
     return Column(
       children: [
-        Icon(icon, color: const Color(0xFF0656A0), size: iconSize),
-        SizedBox(height: 4),
+        Icon(icon, color: themeColor, size: 28),
+        SizedBox(height: 8),
         Text(
-          text,
+          value,
           style: TextStyle(
-            fontSize: fontSizeSmall,
+            fontSize: 15,
             fontWeight: FontWeight.bold,
-            color: const Color(0xFF0656A0),
+            color: Colors.grey[800],
           ),
           textAlign: TextAlign.center,
+        ),
+        SizedBox(height: 4),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            color: Colors.grey[600],
+          ),
         ),
       ],
     );
   }
 
-  Widget _buildMembershipBenefits() {
+  Widget _buildBenefits() {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 30.0, vertical: 16.0),
-      margin: EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
+      padding: EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            spreadRadius: 2,
-            blurRadius: 5,
-            offset: Offset(0, 3),
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
           ),
         ],
       ),
@@ -309,18 +445,18 @@ class _Company_profileState extends State<Company_profile> {
           Text(
             'MEMBERSHIP BENEFITS',
             style: TextStyle(
-              fontSize: fontSizeLarge,
+              fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: const Color(0xFF0656A0),
+              color: themeColor,
             ),
           ),
-          SizedBox(height: 16),
+          SizedBox(height: 20),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildBenefitItem(Icons.local_offer, 'Discounts'),
-              _buildBenefitItem(Icons.card_giftcard, 'Rewards'),
-              _buildBenefitItem(Icons.support, '24/7 Support'),
+              _buildBenefitItem(Icons.local_offer_outlined, 'Discounts'),
+              _buildBenefitItem(Icons.card_giftcard_outlined, 'Rewards'),
+              _buildBenefitItem(Icons.support_agent_outlined, '24/7 Support'),
             ],
           ),
         ],
@@ -331,86 +467,383 @@ class _Company_profileState extends State<Company_profile> {
   Widget _buildBenefitItem(IconData icon, String text) {
     return Column(
       children: [
-        Icon(icon, color: const Color(0xFF0656A0), size: iconSize),
-        SizedBox(height: 4),
+        Container(
+          padding: EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: themeColor.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(icon, color: themeColor, size: 24),
+        ),
+        SizedBox(height: 8),
         Text(
           text,
           style: TextStyle(
-            fontSize: fontSizeSmall,
-            fontWeight: FontWeight.bold,
-            color: const Color(0xFF0656A0),
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
           ),
         ),
       ],
     );
   }
 
-  Widget _buildPromotions() {
-    return Container(
-      padding: EdgeInsets.all(20.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'PROMOTIONS',
-            style: TextStyle(
-              fontSize: fontSizeLarge,
-              fontWeight: FontWeight.bold,
-              color: const Color(0xFF0656A0),
-            ),
+  Widget _buildSpecialOfferSection() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final crossAxisCount = _getDeviceType(context) == DeviceType.tablet ? 3 : 2;
+        final childAspectRatio = _getDeviceType(context) == DeviceType.tablet ? 1.1 : 0.75;
+
+        return Container(
+          decoration: BoxDecoration(
+            color: themeColor,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 10,
+              ),
+            ],
           ),
-          SizedBox(height: 16),
-          _buildPromotionCard(
-            'SPECIAL OFFER',
-            _buildCountdownTimer(),
-            const Color(0xFF0656A0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'SPECIAL OFFER',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    SizedBox(height: 16),
+                    _buildCountdownTimer(),
+                  ],
+                ),
+              ),
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.vertical(bottom: Radius.circular(12)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: EdgeInsets.all(16),
+                      child: Text(
+                        'Featured Products',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: themeColor,
+                        ),
+                      ),
+                    ),
+                    GridView.builder(
+                      padding: EdgeInsets.fromLTRB(16, 0, 16, 16),
+                      shrinkWrap: true,
+                      physics: NeverScrollableScrollPhysics(),
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: crossAxisCount,
+                        childAspectRatio: childAspectRatio,
+                        crossAxisSpacing: 16,
+                        mainAxisSpacing: 16,
+                      ),
+                      itemCount: products.length,
+                      itemBuilder: (context, index) => _buildProductCard(products[index]),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-          SizedBox(height: 16),
-          _buildPromotionCard(
-            'GET 20% OFF ON YOUR FIRST PURCHASE',
-            Icon(Icons.card_giftcard, color: Colors.white, size: iconSize * 2),
-            Colors.orange,
-          ),
-          SizedBox(height: 16),
-          _buildPromotionCard(
-            'FREE SHIPPING ON ORDERS OVER \$50',
-            Icon(Icons.local_shipping, color: Colors.white, size: iconSize * 2),
-            Colors.green,
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
-  Widget _buildPromotionCard(String title, Widget content, Color backgroundColor) {
-    return Container(
-      padding: EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            spreadRadius: 2,
-            blurRadius: 5,
-            offset: Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Text(
-            title,
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: fontSizeLarge,
-              fontWeight: FontWeight.bold,
+  Widget _buildProductCard(Product product) {
+    double originalPrice = double.parse(product.price.replaceAll('\$', ''));
+    double discountPrice = double.parse(product.discountPrice.replaceAll('\$', ''));
+    int discountPercentage = ((originalPrice - discountPrice) / originalPrice * 100).round();
+
+    // Get device type for responsive sizing
+    final isTablet = _getDeviceType(context) == DeviceType.tablet;
+
+    return InkWell(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ProductDetailsPage(
+              themeColor: themeColor,
             ),
           ),
-          SizedBox(height: 16),
-          content,
-        ],
+        );
+      },
+      borderRadius: BorderRadius.circular(12),
+      child: Card(
+        elevation: 2,
+        shadowColor: Colors.black.withOpacity(0.1),
+        clipBehavior: Clip.antiAlias,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  // Image container with gradient overlay
+                  Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.grey[100]!,
+                          Colors.grey[50]!,
+                        ],
+                      ),
+                    ),
+                    child: Center(
+                      child: Icon(
+                        Icons.image_outlined,
+                        color: Colors.grey[400],
+                        size: 32,
+                      ),
+                    ),
+                  ),
+                  // Responsive discount badge
+                  Positioned(
+                    top: isTablet ? 8 : 3,
+                    left: isTablet ? 8 : 3,
+                    child: Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: isTablet ? 8 : 3,
+                        vertical: isTablet ? 4 : 1,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.red[600],
+                        borderRadius: BorderRadius.circular(isTablet ? 20 : 12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: isTablet ? 4 : 2,
+                            offset: Offset(0, isTablet ? 2 : 1),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.local_offer_outlined,
+                            color: Colors.white,
+                            size: isTablet ? 12 : 10,
+                          ),
+                          SizedBox(width: isTablet ? 4 : 2),
+                          Text(
+                            '$discountPercentage% OFF',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: isTablet ? 12 : 10,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  // Hover effect overlay
+                  Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () {},
+                      splashColor: themeColor.withOpacity(0.1),
+                      highlightColor: Colors.transparent,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              height: 90,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                border: Border(
+                  top: BorderSide(
+                    color: Colors.grey[200]!,
+                    width: 1,
+                  ),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        product.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
+                          letterSpacing: 0.2,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        product.description,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: Colors.grey[600],
+                          fontSize: 11,
+                          letterSpacing: 0.1,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        product.discountPrice,
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                          color: themeColor,
+                          letterSpacing: -0.1,
+                        ),
+                      ),
+                      Text(
+                        product.price,
+                        style: TextStyle(
+                          decoration: TextDecoration.lineThrough,
+                          color: Colors.red[400],
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
+    );
+  }
+  Widget _buildResponsivePosterContainers(BuildContext context) {
+    final isTablet = _getDeviceType(context) == DeviceType.tablet;
+
+    if (isTablet) {
+      return Row(
+        children: [
+          Expanded(
+            child: _buildSinglePosterContainer(),
+          ),
+          SizedBox(width: 16),
+          Expanded(
+            child: _buildSinglePosterContainer(),
+          ),
+        ],
+      );
+    } else {
+      return Column(
+        children: [
+          _buildSinglePosterContainer(),
+          SizedBox(height: 24),
+          _buildSinglePosterContainer(),
+        ],
+      );
+    }
+  }
+
+  Widget _buildSinglePosterContainer() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Calculate dynamic height based on device type
+        final isTablet = _getDeviceType(context) == DeviceType.tablet;
+        final containerHeight = isTablet ? 300.0 : 200.0; // Increased height for tablet
+
+        return InkWell(
+          onTap: () {
+            // Add your image picker logic here
+          },
+          child: Container(
+            height: containerHeight,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  themeColor.withOpacity(0.7),
+                  themeColor.withOpacity(0.9),
+                ],
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.3),
+                  offset: Offset(0, 8),
+                  blurRadius: 10,
+                  spreadRadius: -2,
+                ),
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.2),
+                  offset: Offset(8, 0),
+                  blurRadius: 10,
+                  spreadRadius: -2,
+                ),
+                BoxShadow(
+                  color: Colors.white.withOpacity(0.2),
+                  offset: Offset(-4, -4),
+                  blurRadius: 12,
+                  spreadRadius: -2,
+                ),
+              ],
+              border: Border(
+                right: BorderSide(color: themeColor.withOpacity(0.5), width: 2),
+                bottom: BorderSide(color: themeColor.withOpacity(0.5), width: 2),
+                top: BorderSide(color: Colors.white.withOpacity(0.3), width: 1),
+                left: BorderSide(color: Colors.white.withOpacity(0.3), width: 1),
+              ),
+            ),
+            child: Transform(
+              transform: Matrix4.identity()
+                ..setEntry(3, 2, 0.001)
+                ..rotateX(0.05)
+                ..rotateY(-0.05),
+              alignment: Alignment.center,
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Colors.white.withOpacity(0.1),
+                      Colors.transparent,
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -420,9 +853,9 @@ class _Company_profileState extends State<Company_profile> {
       children: [
         _buildTimeUnit(_timeUntilEnd.inHours.remainder(24), 'HOURS'),
         _buildTimeSeparator(),
-        _buildTimeUnit(_timeUntilEnd.inMinutes.remainder(60), 'MINUTES'),
+        _buildTimeUnit(_timeUntilEnd.inMinutes.remainder(60), 'MIN'),
         _buildTimeSeparator(),
-        _buildTimeUnit(_timeUntilEnd.inSeconds.remainder(60), 'SECONDS'),
+        _buildTimeUnit(_timeUntilEnd.inSeconds.remainder(60), 'SEC'),
       ],
     );
   }
@@ -439,16 +872,16 @@ class _Company_profileState extends State<Company_profile> {
           Text(
             value.toString().padLeft(2, '0'),
             style: TextStyle(
-              color: const Color(0xFF0656A0),
-              fontSize: fontSizeLarge,
+              color: themeColor,
+              fontSize: 24,
               fontWeight: FontWeight.bold,
             ),
           ),
           Text(
             label,
             style: TextStyle(
-              color: const Color(0xFF0656A0),
-              fontSize: fontSizeSmall,
+              color: themeColor,
+              fontSize: 12,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -458,16 +891,42 @@ class _Company_profileState extends State<Company_profile> {
   }
 
   Widget _buildTimeSeparator() {
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 4),
+    return const Padding(
+      padding: EdgeInsets.symmetric(horizontal: 8),
       child: Text(
         ':',
         style: TextStyle(
           color: Colors.white,
-          fontSize: fontSizeLarge,
+          fontSize: 24,
           fontWeight: FontWeight.bold,
         ),
       ),
+    );
+  }
+}
+
+// Main app class
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final companyData = {
+      'companyName': 'Tech Solutions Inc',
+      'category': 'Technology',
+      'rating': '4.8',
+      'description': 'Leading provider of innovative technology solutions for businesses and consumers. Specializing in software development, cloud computing, and digital transformation.',
+      'users': '15000',
+      'location': 'New York',
+      'foundedYear': '2010',
+    };
+
+    return MaterialApp(
+      title: 'Company Profile',
+      theme: ThemeData(
+        primaryColor: Color(0xFF0656A0),
+        scaffoldBackgroundColor: Colors.grey[100],
+        fontFamily: 'Roboto',
+      ),
+      home: Company_profile(companyData: companyData),
     );
   }
 }

@@ -25,6 +25,9 @@ dependencies:
   flip_card: ^0.7.0
   card_swiper: ^3.0.1
   coupon_uikit: ^0.2.1
+  share_plus: ^10.1.2
+  intl_phone_field: ^3.2.0
+  shared_preferences: ^2.3.3
 
 
 dev_dependencies:
@@ -51,3 +54,10 @@ flutter:
     - assets/Settings.png
     - assets/Voucher.png
     - assets/Working_profile.png
+    - assets/vouchers.png
+    - assets/test.png
+    - assets/logo.jpg
+    - assets/redeemed.png
+    - assets/expired.png
+    - assets/menu.png
+    - assets/Forget.png

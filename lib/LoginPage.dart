@@ -1,17 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:dio/dio.dart';
+import 'package:intl_phone_field/intl_phone_field.dart';
+import 'HomePage.dart';
+import 'ForgotPasswordPage.dart';
 
-// API Service Class
 class LoginApiService {
   final Dio _dio = Dio();
   final String baseUrl = 'https://ezymember.ezymember.com.my/api';
 
-  Future<Map<String, dynamic>> login(String email, String password) async {
+  Future<Map<String, dynamic>> login(String input, String password) async {
     try {
       final response = await _dio.post(
         '$baseUrl/auth/ezymember123/login',
         data: {
-          'email': email,
+          'email': input,
           'password': password,
         },
       );
@@ -29,7 +32,6 @@ class LoginApiService {
   }
 }
 
-// Login Page Widget
 class LoginPage extends StatefulWidget {
   @override
   State<LoginPage> createState() => _LoginPageState();
@@ -37,16 +39,21 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
-  final _emailPhoneController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   final _loginApiService = LoginApiService();
   bool _isPasswordVisible = false;
   bool _isValidating = false;
   bool _isLoading = false;
+  bool _isPhoneLogin = false;
+  String _completePhoneNumber = '';
+  static const Color themeColor = Color(0xFF0656A0);
 
   @override
   void dispose() {
-    _emailPhoneController.dispose();
+    _emailController.dispose();
+    _phoneController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
@@ -56,17 +63,15 @@ class _LoginPageState extends State<LoginPage> {
     return emailRegex.hasMatch(value);
   }
 
-  String? validateEmailPhone(String? value) {
+  String? validateEmail(String? value) {
     if (!_isValidating) return null;
 
     if (value == null || value.isEmpty) {
       return 'Email is required';
     }
-
     if (!isValidEmail(value)) {
       return 'Please enter a valid email address';
     }
-
     return null;
   }
 
@@ -144,6 +149,7 @@ class _LoginPageState extends State<LoginPage> {
       ),
     );
   }
+
   void _showSuccessAlert() {
     showDialog(
       context: context,
@@ -182,11 +188,13 @@ class _LoginPageState extends State<LoginPage> {
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
-              // Add your navigation logic here
-              // Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => HomePage()));
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => HomePage()),
+              );
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Color(0xFF0656A0),
+              backgroundColor: themeColor,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
@@ -206,6 +214,7 @@ class _LoginPageState extends State<LoginPage> {
       ),
     );
   }
+
   Future<void> _handleLogin() async {
     setState(() {
       _isValidating = true;
@@ -214,19 +223,14 @@ class _LoginPageState extends State<LoginPage> {
 
     if (_formKey.currentState?.validate() ?? false) {
       try {
+        final input = _isPhoneLogin ? _completePhoneNumber : _emailController.text;
         final response = await _loginApiService.login(
-          _emailPhoneController.text,
+          input,
           _passwordController.text,
         );
 
-        // Show success alert
         _showSuccessAlert();
-
-        // Handle successful login here
         print('Login successful: $response');
-
-        // Note: Navigation is now handled in the success alert OK button
-
       } catch (e) {
         _showErrorAlert(e.toString());
       } finally {
@@ -246,8 +250,14 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   String? _getFirstValidationError() {
-    final emailPhone = validateEmailPhone(_emailPhoneController.text);
-    if (emailPhone != null) return emailPhone;
+    if (_isPhoneLogin) {
+      if (_completePhoneNumber.isEmpty) {
+        return 'Phone number is required';
+      }
+    } else {
+      final emailError = validateEmail(_emailController.text);
+      if (emailError != null) return emailError;
+    }
 
     final password = validatePassword(_passwordController.text);
     if (password != null) return password;
@@ -269,7 +279,7 @@ class _LoginPageState extends State<LoginPage> {
                   style: TextStyle(
                     fontSize: 25,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF0656A0),
+                    color: themeColor,
                   ),
                 ),
               ),
@@ -326,7 +336,7 @@ class _LoginPageState extends State<LoginPage> {
                         style: TextStyle(
                           fontSize: 32,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF0656A0),
+                          color: themeColor,
                         ),
                       ),
                       SizedBox(height: 20),
@@ -356,15 +366,47 @@ class _LoginPageState extends State<LoginPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _buildInputField(
-            controller: _emailPhoneController,
-            hintText: 'Email',
-            icon: Icons.person,
-            isPassword: false,
-            validator: validateEmailPhone,
-            keyboardType: TextInputType.emailAddress,
-            textInputAction: TextInputAction.next,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              ChoiceChip(
+                label: Text('Email'),
+                selected: !_isPhoneLogin,
+                onSelected: (bool selected) {
+                  if (selected) {
+                    setState(() {
+                      _isPhoneLogin = false;
+                      _phoneController.clear();
+                      _completePhoneNumber = '';
+                    });
+                  }
+                },
+                selectedColor: themeColor,
+                labelStyle: TextStyle(
+                  color: !_isPhoneLogin ? Colors.white : Colors.black,
+                ),
+              ),
+              SizedBox(width: 16),
+              ChoiceChip(
+                label: Text('Phone'),
+                selected: _isPhoneLogin,
+                onSelected: (bool selected) {
+                  if (selected) {
+                    setState(() {
+                      _isPhoneLogin = true;
+                      _emailController.clear();
+                    });
+                  }
+                },
+                selectedColor: themeColor,
+                labelStyle: TextStyle(
+                  color: _isPhoneLogin ? Colors.white : Colors.black,
+                ),
+              ),
+            ],
           ),
+          SizedBox(height: 16),
+          _buildLoginInputField(),
           const SizedBox(height: 16),
           _buildInputField(
             controller: _passwordController,
@@ -376,7 +418,7 @@ class _LoginPageState extends State<LoginPage> {
             suffixIcon: IconButton(
               icon: Icon(
                 _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
-                color: Color(0xFF0656A0),
+                color: themeColor,
               ),
               onPressed: () {
                 setState(() {
@@ -390,19 +432,21 @@ class _LoginPageState extends State<LoginPage> {
             alignment: Alignment.centerRight,
             child: TextButton(
               onPressed: () {
-                // Handle forgot password
-                print('Forgot password pressed');
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => ForgotPasswordPage()),
+                );
               },
               style: TextButton.styleFrom(
                 padding: EdgeInsets.zero,
                 minimumSize: Size(50, 30),
                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
               ),
-              child: const Text(
+              child: Text(
                 'Forgot Password?',
                 style: TextStyle(
                   fontSize: 12,
-                  color: Color(0xFF0656A0),
+                  color: themeColor,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -416,7 +460,7 @@ class _LoginPageState extends State<LoginPage> {
               child: ElevatedButton(
                 onPressed: _isLoading ? null : _handleLogin,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Color(0xFF0656A0),
+                  backgroundColor: themeColor,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -459,7 +503,7 @@ class _LoginPageState extends State<LoginPage> {
                   'Register',
                   style: TextStyle(
                     fontSize: 12,
-                    color: Color(0xFF0656A0),
+                    color: themeColor,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -471,6 +515,105 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
+  Widget _buildLoginInputField() {
+    if (_isPhoneLogin) {
+      return Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(10),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.5),
+              spreadRadius: 1,
+              blurRadius: 6,
+              offset: Offset(0, 3),
+            ),
+          ],
+        ),
+        child: IntlPhoneField(
+          controller: _phoneController,
+          decoration: InputDecoration(
+            hintText: 'Phone Number',
+            hintStyle: TextStyle(
+              color: Colors.grey[400],
+              fontSize: 14,
+            ),
+            filled: true,
+            fillColor: Colors.white,
+            contentPadding: EdgeInsets.symmetric(vertical: 18, horizontal: 16),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide.none,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide.none,
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide(color: themeColor, width: 1),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide(color: Colors.red, width: 1),
+            ),
+            focusedErrorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide(color: Colors.red, width: 1),
+            ),
+            // Custom counter widget to show current length out of 10
+            counter: Text(
+              '${_phoneController.text.length}/10',
+              style: TextStyle(
+                color: Colors.grey[600],
+                fontSize: 12,
+              ),
+            ),
+          ),
+          initialCountryCode: 'MY',
+          disableLengthCheck: true,
+          onChanged: (phone) {
+            // Limit to 10 digits
+            if (phone.number.length > 10) {
+              String truncated = phone.number.substring(0, 10);
+              _phoneController.value = TextEditingValue(
+                text: truncated,
+                selection: TextSelection.collapsed(offset: truncated.length),
+              );
+            }
+            setState(() {
+              _completePhoneNumber = phone.completeNumber;
+            });
+          },
+          validator: (phone) {
+            if (!_isValidating) return null;
+            if (phone == null || phone.number.isEmpty) {
+              return 'Phone number is required';
+            }
+            if (phone.number.length != 10) {
+              return 'Phone number must be exactly 10 digits';
+            }
+            return null;
+          },
+          inputFormatters: [
+            FilteringTextInputFormatter.digitsOnly,
+            LengthLimitingTextInputFormatter(10),
+          ],
+        ),
+      );
+    } else {
+      return _buildInputField(
+        controller: _emailController,
+        hintText: 'Email',
+        icon: Icons.email,
+        isPassword: false,
+        validator: validateEmail,
+        keyboardType: TextInputType.emailAddress,
+        textInputAction: TextInputAction.next,
+      );
+    }
+  }
+
   Widget _buildInputField({
     required TextEditingController controller,
     required String hintText,
@@ -480,9 +623,9 @@ class _LoginPageState extends State<LoginPage> {
     TextInputType? keyboardType,
     TextInputAction? textInputAction,
     Widget? suffixIcon,
+    List<TextInputFormatter>? inputFormatters,
   }) {
     return Container(
-      height: 55,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(10),
@@ -495,37 +638,61 @@ class _LoginPageState extends State<LoginPage> {
           ),
         ],
       ),
-      child: TextFormField(
-        controller: controller,
-        style: TextStyle(fontSize: 14),
-        decoration: InputDecoration(
-          hintText: hintText,
-          hintStyle: TextStyle(
-            color: Colors.grey[400],
-            fontSize: 14,
-          ),
-          prefixIcon: Icon(icon, color: Color(0xFF0656A0), size: 22),
-          suffixIcon: suffixIcon,
-          filled: true,
-          fillColor: Colors.white,
-          contentPadding: EdgeInsets.symmetric(vertical: 18, horizontal: 16),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide: BorderSide.none,
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide: BorderSide.none,
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide: BorderSide(color: Color(0xFF0656A0), width: 1),
+      child: Theme(
+        data: Theme.of(context).copyWith(
+          inputDecorationTheme: InputDecorationTheme(
+            // This ensures error text is included within the border
+            errorStyle: TextStyle(
+              color: Colors.red,
+              fontSize: 12,
+            ),
           ),
         ),
-        obscureText: isPassword,
-        validator: validator,
-        keyboardType: keyboardType,
-        textInputAction: textInputAction,
+        child: TextFormField(
+          controller: controller,
+          style: TextStyle(fontSize: 14),
+          decoration: InputDecoration(
+            hintText: hintText,
+            hintStyle: TextStyle(
+              color: Colors.grey[400],
+              fontSize: 14,
+            ),
+            prefixIcon: Icon(icon, color: themeColor, size: 22),
+            suffixIcon: suffixIcon,
+            filled: true,
+            fillColor: Colors.white,
+            contentPadding: EdgeInsets.symmetric(vertical: 18, horizontal: 16),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide.none,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide.none,
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide(color: themeColor, width: 1),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide(color: Colors.red, width: 1),
+            ),
+            focusedErrorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide(color: Colors.red, width: 1),
+            ),
+            // Remove the default error border
+            errorMaxLines: null,
+            // Include error text within the container
+            isDense: true,
+          ),
+          obscureText: isPassword,
+          validator: validator,
+          keyboardType: keyboardType,
+          textInputAction: textInputAction,
+          inputFormatters: inputFormatters,
+        ),
       ),
     );
   }
@@ -536,7 +703,7 @@ class _LoginPageState extends State<LoginPage> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Color(0xFF0656A0),
+        backgroundColor: themeColor,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(
@@ -552,9 +719,11 @@ class _LoginPageState extends State<LoginPage> {
         ),
         centerTitle: true,
       ),
-      body: isTablet
-          ? _buildTabletLayout(context)
-          : _buildPhoneLayout(context),
+      body: SafeArea(
+        child: isTablet
+            ? _buildTabletLayout(context)
+            : _buildPhoneLayout(context),
+      ),
     );
   }
 }

@@ -6,6 +6,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'dart:io';
 
+import 'CustomAppBar.dart';
+
 class ProfilePage extends StatefulWidget {
   @override
   _ProfilePageState createState() => _ProfilePageState();
@@ -1051,20 +1053,11 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
     final isTablet = screenWidth > 600;
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: CustomAppBar(
         backgroundColor: Color(0xFF0656A0),
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios,
-              color: Colors.white, size: isTablet ? 20 : 18),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Image.asset(
-          'assets/imin_display_logo.png', // Replace with your actual asset path
-          color: Colors.white,
-          height: isTablet ? 20 : 18,
-        ),
-        centerTitle: true,
+        onBackPressed: () => Navigator.pop(context),
+        useLogo: false,
+        titleText: 'My Profile',
       ),
       body: isTablet ? _buildTabletLayout() : _buildPhoneLayout(),
     );

@@ -3,6 +3,7 @@ import 'RegistrationPage.dart';
 import 'LoginPage.dart'; // Assuming you have this page
 import 'ProfilePage.dart';
 import 'Main_profile.dart';
+import 'package:ezymember/HomePage.dart';
 
 
 
@@ -129,7 +130,7 @@ class _WelcomePageState extends State<WelcomePage> {
     // Navigate to ProfilePage
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => Main_profile()),
+      MaterialPageRoute(builder: (context) => HomePage()),
     );
   }
 
@@ -277,9 +278,9 @@ class _WelcomePageState extends State<WelcomePage> {
                 const SizedBox(height: 20),
                 // Temporary button to navigate to ProfilePage
                 _buildButton(
-                  onPressed: _onProfilePressed,
-                  buttonText: 'Go to Profile Page',
-                ),
+                    onPressed: _onProfilePressed,
+                    buttonText: 'Go to Profile Page',
+                  ),
               ],
             ),
           ),

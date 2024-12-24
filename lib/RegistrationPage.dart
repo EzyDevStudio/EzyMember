@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:dio/dio.dart';
+import 'package:intl_phone_field/intl_phone_field.dart';
+import 'LoginPage.dart';
 
 // Registration Service
 class RegistrationService {
@@ -21,6 +23,7 @@ class RegistrationService {
           'phone_number1': phoneNumber,
         },
       );
+      print(response.data);
 
       if (response.statusCode == 200) {
         return true;
@@ -44,7 +47,7 @@ class RegistrationService {
       case DioExceptionType.connectionError:
         return 'Connection error';
       default:
-        return 'Something went wrong';
+        return error.response.toString();
     }
   }
 
@@ -123,13 +126,29 @@ class CustomAlertDialog extends StatelessWidget {
           ),
           if (showEmailNote) ...[
             SizedBox(height: 16),
-            Text(
-              'Please check your inbox. We have sent your password to your email.',
+            RichText(
               textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey[600],
-                fontStyle: FontStyle.italic,
+              text: TextSpan(
+                style: TextStyle(
+                  fontSize: 12,
+                  fontStyle: FontStyle.italic,
+                ),
+                children: [
+                  TextSpan(
+                    text: 'Please check your email inbox. We have sent your password to your email',
+                    style: TextStyle(color: Colors.grey[600]),
+                  ),
+                  TextSpan(
+                    text: '\n\n',
+                  ),
+                  TextSpan(
+                    text: 'The password is the last 6 digits in your phone number.',
+                    style: TextStyle(
+                      color: Colors.blue[800],
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
@@ -168,6 +187,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
   final _registrationService = RegistrationService();
+  String _completePhoneNumber = '';
 
   @override
   void dispose() {
@@ -197,17 +217,6 @@ class _RegistrationPageState extends State<RegistrationPage> {
     final emailRegex = RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
     if (!emailRegex.hasMatch(value)) {
       return 'Enter a valid email address';
-    }
-    return null;
-  }
-
-  String? validatePhone(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Phone number is required';
-    }
-    final cleanPhone = value.replaceAll(RegExp(r'\D'), '');
-    if (cleanPhone.length != 10) {
-      return 'Enter a valid 10-digit phone number';
     }
     return null;
   }
@@ -249,7 +258,13 @@ class _RegistrationPageState extends State<RegistrationPage> {
         message: 'Registration completed successfully!',
         imagePath: 'assets/success.png',
         buttonColor: Color(0xFF0656A0),
-        onPressed: () => Navigator.pop(context),
+        onPressed: () {
+          Navigator.pop(context);
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => LoginPage()),
+          );
+        },
         showEmailNote: true,
       ),
     );
@@ -299,9 +314,8 @@ class _RegistrationPageState extends State<RegistrationPage> {
     }
 
     // Validate phone
-    String? phoneError = validatePhone(_phoneController.text);
-    if (phoneError != null) {
-      _showWarningAlert(phoneError);
+    if (_completePhoneNumber.isEmpty) {
+      _showWarningAlert('Phone number is required');
       return;
     }
 
@@ -311,23 +325,21 @@ class _RegistrationPageState extends State<RegistrationPage> {
       final success = await _registrationService.registerUser(
         name: _nameController.text,
         email: _emailController.text,
-        phoneNumber: _phoneController.text,
+        phoneNumber: _completePhoneNumber,
       );
 
-      // Remove loading dialog
       Navigator.pop(context);
 
       if (success) {
         _showSuccessAlert();
-        // Clear form fields after successful registration
         _nameController.clear();
         _emailController.clear();
         _phoneController.clear();
+        _completePhoneNumber = '';
       } else {
         _showErrorAlert('Registration failed. Please try again.');
       }
     } catch (error) {
-      // Remove loading dialog
       Navigator.pop(context);
       _showErrorAlert(error.toString());
     }
@@ -428,6 +440,135 @@ class _RegistrationPageState extends State<RegistrationPage> {
     );
   }
 
+  Widget _buildInputField({
+    required TextEditingController controller,
+    required String hintText,
+    required IconData icon,
+    required bool isPassword,
+    required String? Function(String?) validator,
+    TextInputType? keyboardType,
+    TextInputAction? textInputAction,
+    List<TextInputFormatter>? inputFormatters,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.5),
+            spreadRadius: 1,
+            blurRadius: 6,
+            offset: Offset(0, 3),
+          ),
+        ],
+      ),
+      child: TextFormField(
+        controller: controller,
+        decoration: InputDecoration(
+          hintText: hintText,
+          hintStyle: TextStyle(color: Colors.grey[300]),
+          prefixIcon: Icon(icon, color: Color(0xFF0656A0)),
+          filled: true,
+          fillColor: Colors.white,
+          contentPadding: EdgeInsets.symmetric(vertical: 18),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: BorderSide.none,
+          ),
+        ),
+        obscureText: isPassword,
+        validator: validator,
+        keyboardType: keyboardType,
+        textInputAction: textInputAction,
+        inputFormatters: inputFormatters,
+      ),
+    );
+  }
+
+  Widget _buildPhoneField() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.5),
+            spreadRadius: 1,
+            blurRadius: 6,
+            offset: Offset(0, 3),
+          ),
+        ],
+      ),
+      child: IntlPhoneField(
+        controller: _phoneController,
+        decoration: InputDecoration(
+          hintText: 'Phone Number',
+          hintStyle: TextStyle(color: Colors.grey[300]),
+          filled: true,
+          fillColor: Colors.white,
+          contentPadding: EdgeInsets.symmetric(vertical: 18, horizontal: 16),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: BorderSide.none,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: BorderSide.none,
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: BorderSide(color: Color(0xFF0656A0), width: 1),
+          ),
+          errorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: BorderSide(color: Colors.red, width: 1),
+          ),
+          focusedErrorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: BorderSide(color: Colors.red, width: 1),
+          ),
+          // Custom counter widget to show 10/10
+          counter: Text(
+            '${_phoneController.text.length}/10',
+            style: TextStyle(
+              color: Colors.grey[600],
+              fontSize: 12,
+            ),
+          ),
+        ),
+        initialCountryCode: 'MY',
+        disableLengthCheck: true,
+        onChanged: (phone) {
+          if (phone.number.length > 10) {
+            String truncated = phone.number.substring(0, 10);
+            _phoneController.value = TextEditingValue(
+              text: truncated,
+              selection: TextSelection.collapsed(offset: truncated.length),
+            );
+          }
+          // Force refresh to update the counter
+          setState(() {
+            _completePhoneNumber = phone.completeNumber;
+          });
+        },
+        validator: (phone) {
+          if (phone == null || phone.number.isEmpty) {
+            return 'Phone number is required';
+          }
+          if (phone.number.length != 10) {
+            return 'Phone number must be exactly 10 digits';
+          }
+          return null;
+        },
+        inputFormatters: [
+          FilteringTextInputFormatter.digitsOnly,
+          LengthLimitingTextInputFormatter(10),
+        ],
+      ),
+    );
+  }
+
   Widget _buildRegistrationForm(BuildContext context, {required bool isTablet}) {
     return Form(
       key: _formKey,
@@ -454,19 +595,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
             textInputAction: TextInputAction.next,
           ),
           SizedBox(height: 16),
-          _buildInputField(
-            controller: _phoneController,
-            hintText: 'Phone Number',
-            icon: Icons.phone,
-            isPassword: false,
-            validator: validatePhone,
-            keyboardType: TextInputType.phone,
-            textInputAction: TextInputAction.done,
-            inputFormatters: [
-              FilteringTextInputFormatter.digitsOnly,
-              LengthLimitingTextInputFormatter(10),
-            ],
-          ),
+          _buildPhoneField(),
           SizedBox(height: 32),
           Center(
             child: SizedBox(
@@ -489,54 +618,42 @@ class _RegistrationPageState extends State<RegistrationPage> {
               ),
             ),
           ),
+          SizedBox(height: 20),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                "Already have an account? ",
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey[600],
+                ),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (context) => LoginPage()),
+                  );
+                },
+                style: TextButton.styleFrom(
+                  padding: EdgeInsets.zero,
+                  minimumSize: Size(50, 30),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                child: Text(
+                  'Login',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF0656A0),
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ],
       ),
-    );
-  }
-
-  Widget _buildInputField({
-    required TextEditingController controller,
-    required String hintText,
-    required IconData icon,
-    required bool isPassword,
-    required String? Function(String?) validator,
-    TextInputType? keyboardType,
-    TextInputAction? textInputAction,
-    List<TextInputFormatter>? inputFormatters,
-  }) {
-    return Container(
-        decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-    boxShadow: [
-    BoxShadow(
-    color: Colors.grey.withOpacity(0.5),
-    spreadRadius: 1,
-    blurRadius: 6,
-    offset: Offset(0, 3),
-    ),
-    ],
-    ),
-    child: TextFormField(
-    controller: controller,
-    decoration: InputDecoration(
-    hintText: hintText,
-    hintStyle: TextStyle(color: Colors.grey[300]),
-    prefixIcon: Icon(icon, color: Color(0xFF0656A0)),
-    filled: true,
-    fillColor: Colors.white,
-      contentPadding: EdgeInsets.symmetric(vertical: 18),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10),
-        borderSide: BorderSide.none,
-      ),
-    ),
-      obscureText: isPassword,
-      validator: validator,
-      keyboardType: keyboardType,
-      textInputAction: textInputAction,
-      inputFormatters: inputFormatters,
-    ),
     );
   }
 
@@ -562,14 +679,16 @@ class _RegistrationPageState extends State<RegistrationPage> {
         ),
         centerTitle: true,
       ),
-      body: isTablet
-          ? _buildTabletLayout(context)
-          : _buildPhoneLayout(context),
+      body: SafeArea(
+        child: isTablet
+            ? _buildTabletLayout(context)
+            : _buildPhoneLayout(context),
+      ),
     );
   }
 }
 
-// Animated Button Widget Implementation
+// Animated Press Button Widget Implementation
 class AnimatedPressButton extends StatefulWidget {
   final VoidCallback onPressed;
   final Widget child;
